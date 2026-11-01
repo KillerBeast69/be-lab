@@ -1,40 +1,31 @@
-import requests          # downloads web pages (like a browser fetching a URL)
+import requests          # downloads a web page from a URL
 from bs4 import BeautifulSoup  # parses HTML into a searchable tree
+import json              # saves results to a file
 
-# ---- STEP 1: Download a single page ----
-url = "https://books.toscrape.com/"   # a real site built for practice scraping
-response = requests.get(url)          # fetch the page HTML
-html = response.text                  # get the raw HTML as a string
+# Download the page HTML from a real site built for practice scraping
+url = "https://books.toscrape.com/"
+response = requests.get(url)  # fetch the page (same as a browser visiting it)
+html = response.text          # get the raw HTML string
 
-# ---- STEP 2: Parse the HTML ----
+# Parse the HTML into a tree so we can query tags by class/id
 soup = BeautifulSoup(html, "html.parser")
-# html.parser = Python's built-in HTML reader
-# soup is now a tree of all HTML tags — you can query it like a DOM
 
-# ---- STEP 3: Find every product card ----
-products = []                          # empty list to collect results
+products = []  # empty list to collect extracted product data
+# Find every <article class="product_pod"> block — each one is one product card
 for card in soup.find_all("article", class_="product_pod"):
-    # Each <article class="product_pod"> block = one product
-    # find_all returns ALL matching elements (not just the first)
-
+    # Extract the product name from the <h3> tag inside this card
     name = card.find("h3").get_text(strip=True)
-    # find("h3") = grab the first <h3> tag inside this card
-    # get_text(strip=True) = extract the text inside, removing extra spaces
-
+    # Extract the price from the <p> tag with class="price_color"
     price = card.find("p", class_="price_color").get_text(strip=True)
-    # look for <p> with class="price_color" — that's where the price lives
-
+    # Extract the URL from the <a> tag's href attribute
     link = card.find("a")["href"]
-    # grab the <a> tag's href attribute (the URL it points to)
-
+    # Store the extracted fields as a dictionary entry
     products.append({"name": name, "price": price, "link": link})
-    # save this product's data into our list
 
-# ---- STEP 4: Print / save results ----
+# Print each product's name, price, and link
 for p in products:
     print(f"{p['name']:25} | {p['price']:10} | {p['link']}")
 
-# Optional: save to a JSON file
-import json
+# Save all results to a JSON file for submission
 with open("products.json", "w") as f:
     json.dump(products, f, indent=2)
